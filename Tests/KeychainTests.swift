@@ -39,7 +39,7 @@ let testToken = Token(
 )
 
 class KeychainTests: XCTestCase {
-    let keychain = Keychain.sharedInstance
+    let keychain = OTPKeychain()
 
     func testPersistentTokenWithIdentifier() {
         // Create a token
@@ -292,7 +292,7 @@ class KeychainTests: XCTestCase {
     }
 }
 
-// MARK: Keychain helpers
+// MARK: OTPKeychain helpers
 
 private func addKeychainItem(withAttributes attributes: [String: AnyObject]) throws -> Data {
     var mutableAttributes = attributes
@@ -310,10 +310,10 @@ private func addKeychainItem(withAttributes attributes: [String: AnyObject]) thr
     }
 
     guard resultCode == errSecSuccess else {
-        throw Keychain.Error.systemError(resultCode)
+        throw OTPKeychain.Error.systemError(resultCode)
     }
     guard let persistentRef = result as? Data else {
-        throw Keychain.Error.incorrectReturnType
+        throw OTPKeychain.Error.incorrectReturnType
     }
     return persistentRef
 }
@@ -327,6 +327,6 @@ public func deleteKeychainItem(forPersistentRef persistentRef: Data) throws {
     let resultCode = SecItemDelete(queryDict as CFDictionary)
 
     guard resultCode == errSecSuccess else {
-        throw Keychain.Error.systemError(resultCode)
+        throw OTPKeychain.Error.systemError(resultCode)
     }
 }

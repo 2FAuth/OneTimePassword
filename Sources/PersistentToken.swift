@@ -25,7 +25,7 @@
 
 import Foundation
 
-/// A `PersistentToken` represents a `Token` stored in the `Keychain`. The keychain assigns each
+/// A `PersistentToken` represents a `Token` stored in the `OTPKeychain`. The keychain assigns each
 /// saved `token` a unique `id` which can be used to recover the token from the keychain at
 /// a later time.
 public struct PersistentToken: Equatable, Hashable, Identifiable {
