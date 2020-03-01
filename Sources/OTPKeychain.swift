@@ -42,8 +42,8 @@ public final class OTPKeychain {
     ///
     /// - throws: A `OTPKeychain.Error` if an error occurred.
     /// - returns: The persistent token, or `nil` if no token matched the given id.
-    public func persistentToken(with identifier: String) throws -> PersistentToken? {
-        try keychain.item(with: identifier).map(PersistentToken.init(keychainDictionary:))
+    public func persistentToken(with id: String) throws -> PersistentToken? {
+        try keychain.item(with: id).map(PersistentToken.init(keychainDictionary:))
     }
 
     /// Returns the set of all persistent tokens found in the keychain.
@@ -67,10 +67,10 @@ public final class OTPKeychain {
     /// - throws: A `OTPKeychain.Error` if the token was not added successfully.
     /// - returns: The new persistent token.
     public func add(_ token: Token) throws -> PersistentToken {
-        let identifier = UUID().uuidString
+        let id = UUID().uuidString
         let attributes = try serialize(token: token)
-        try keychain.addItem(with: identifier, attributes: attributes)
-        return PersistentToken(token: token, identifier: identifier, ckData: nil)
+        try keychain.addItem(with: id, attributes: attributes)
+        return PersistentToken(token: token, id: id, ckData: nil)
     }
 
     /// Updates the given persistent token with a new token value.
@@ -84,7 +84,7 @@ public final class OTPKeychain {
         let ckData = persistentToken.ckData
         let attributes = try serialize(token: token, ckData: ckData)
         try keychain.updateItem(with: persistentToken.id, attributes: attributes)
-        return PersistentToken(token: token, identifier: persistentToken.id, ckData: ckData)
+        return PersistentToken(token: token, id: persistentToken.id, ckData: ckData)
     }
 
     /// Deletes the given persistent token from the keychain.
@@ -147,7 +147,7 @@ private extension PersistentToken {
         guard let secret = keychainDictionary[kSecValueData as String] as? Data else {
             throw DeserializationError.missingSecret
         }
-        guard let identifier = keychainDictionary[kSecAttrAccount as String] as? String else {
+        guard let id = keychainDictionary[kSecAttrAccount as String] as? String else {
             throw DeserializationError.missingIdentifier
         }
         let url: URL
@@ -160,6 +160,6 @@ private extension PersistentToken {
             throw DeserializationError.unreadableData
         }
         let token = try Token(_url: url, secret: secret)
-        self.init(token: token, identifier: identifier, ckData: ckData)
+        self.init(token: token, id: id, ckData: ckData)
     }
 }

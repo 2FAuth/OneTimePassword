@@ -38,9 +38,9 @@ public struct PersistentToken: Equatable, Hashable, Identifiable {
     public var ckData: Data?
 
     /// Initializes a new `PersistentToken` with the given properties.
-    public init(token: Token, identifier: String, ckData: Data?) {
+    public init(token: Token, id: String, ckData: Data?) {
         self.token = token
-        self.id = identifier
+        self.id = id
         self.ckData = ckData
     }
 
