@@ -21,6 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		2A717696240BD8E700E671A5 /* KeychainWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A717695240BD8E700E671A5 /* KeychainWrapper.swift */; };
 		5B39F49C1DBD06EB00CD2DAB /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = C93A2519196B1BA400F86892 /* Token.swift */; };
 		5B39F49D1DBD06EE00CD2DAB /* Generator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9DC7EC7196BDF3B00B50C82 /* Generator.swift */; };
 		5B39F49E1DBD06F100CD2DAB /* Crypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F544AC1C8391630023CCF0 /* Crypto.swift */; };
@@ -97,6 +98,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2A717695240BD8E700E671A5 /* KeychainWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainWrapper.swift; sourceTree = "<group>"; };
 		5B39F4941DBD06BA00CD2DAB /* OneTimePassword.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = OneTimePassword.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9003417196F7046009733E8 /* OTPKeychain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OTPKeychain.swift; sourceTree = "<group>"; };
 		C9290C2F1947D104008AE4DE /* TokenSerializationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TokenSerializationTests.swift; sourceTree = "<group>"; };
@@ -345,6 +347,7 @@
 			children = (
 				C95F9FB81C03D6BC00CEA286 /* PersistentToken.swift */,
 				C9003417196F7046009733E8 /* OTPKeychain.swift */,
+				2A717695240BD8E700E671A5 /* KeychainWrapper.swift */,
 			);
 			name = Persistence;
 			sourceTree = "<group>";
@@ -589,6 +592,7 @@
 				C9F544AD1C8391630023CCF0 /* Crypto.swift in Sources */,
 				C93A251A196B1BA400F86892 /* Token.swift in Sources */,
 				C95F9FB91C03D6BC00CEA286 /* PersistentToken.swift in Sources */,
+				2A717696240BD8E700E671A5 /* KeychainWrapper.swift in Sources */,
 				C9DC7EC8196BDF3B00B50C82 /* Generator.swift in Sources */,
 				C9003418196F7046009733E8 /* OTPKeychain.swift in Sources */,
 				C9DC7EC4196BD5DF00B50C82 /* Token+URL.swift in Sources */,

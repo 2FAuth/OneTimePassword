@@ -72,6 +72,7 @@ opt_in_rules:
 disabled_rules:
   - cyclomatic_complexity
   - identifier_name
+  - trailing_whitespace
 
 colon:
   flexible_right_spacing: true
