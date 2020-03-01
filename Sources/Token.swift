@@ -66,6 +66,6 @@ public struct Token: Equatable {
 
     /// - returns: A new `Token`, configured to generate the next password.
     public func updatedToken() -> Token {
-        return Token(name: name, issuer: issuer, generator: generator.successor())
+        Token(name: name, issuer: issuer, generator: generator.successor())
     }
 }

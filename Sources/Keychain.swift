@@ -35,12 +35,12 @@ public final class Keychain {
 
     /// Finds the persistent token with the given identifer, if one exists.
     ///
-    /// - parameter identifier: The persistent identifier for the desired token.
+    /// - parameter id: The persistent id for the desired token.
     ///
     /// - throws: A `Keychain.Error` if an error occurred.
-    /// - returns: The persistent token, or `nil` if no token matched the given identifier.
+    /// - returns: The persistent token, or `nil` if no token matched the given id.
     public func persistentToken(withIdentifier identifier: Data) throws -> PersistentToken? {
-        return try keychainItem(forPersistentRef: identifier).map(PersistentToken.init(keychainDictionary:))
+        try keychainItem(forPersistentRef: identifier).map(PersistentToken.init(keychainDictionary:))
     }
 
     /// Returns the set of all persistent tokens found in the keychain.
@@ -78,21 +78,21 @@ public final class Keychain {
     /// - returns: The updated persistent token.
     public func update(_ persistentToken: PersistentToken, with token: Token) throws -> PersistentToken {
         let attributes = try token.keychainAttributes()
-        try updateKeychainItem(forPersistentRef: persistentToken.identifier,
+        try updateKeychainItem(forPersistentRef: persistentToken.id,
                                withAttributes: attributes)
-        return PersistentToken(token: token, identifier: persistentToken.identifier)
+        return PersistentToken(token: token, identifier: persistentToken.id)
     }
 
     /// Deletes the given persistent token from the keychain.
     ///
-    /// - note: After calling `deletePersistentToken(_:)`, the persistent token's `identifier` is no
+    /// - note: After calling `deletePersistentToken(_:)`, the persistent token's `id` is no
     ///         longer valid, and the token should be discarded.
     ///
     /// - parameter persistentToken: The persistent token to delete.
     ///
     /// - throws: A `Keychain.Error` if the deletion did not succeed.
     public func delete(_ persistentToken: PersistentToken) throws {
-        try deleteKeychainItem(forPersistentRef: persistentToken.identifier)
+        try deleteKeychainItem(forPersistentRef: persistentToken.id)
     }
 
     // MARK: Errors

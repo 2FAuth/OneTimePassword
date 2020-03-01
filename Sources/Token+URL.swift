@@ -31,7 +31,7 @@ public extension Token {
 
     /// Serializes the token to a URL.
     func toURL() throws -> URL {
-        return try urlForToken(
+        try urlForToken(
             name: name,
             issuer: issuer,
             factor: generator.factor,

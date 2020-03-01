@@ -56,7 +56,7 @@ class KeychainTests: XCTestCase {
 
         // Restore the token
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.identifier)
+            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
             XCTAssertEqual(fetchedToken, savedToken, "Token should have been saved to keychain")
         } catch {
             XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
@@ -70,7 +70,7 @@ class KeychainTests: XCTestCase {
         )
         do {
             let updatedToken = try keychain.update(savedToken, with: modifiedToken)
-            XCTAssertEqual(updatedToken.identifier, savedToken.identifier)
+            XCTAssertEqual(updatedToken.id, savedToken.id)
             XCTAssertEqual(updatedToken.token, modifiedToken)
         } catch {
             XCTFail("updatePersistentToken(_:withToken:) failed with error: \(error)")
@@ -78,9 +78,9 @@ class KeychainTests: XCTestCase {
 
         // Fetch the token again
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.identifier)
+            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
             XCTAssertEqual(fetchedToken?.token, modifiedToken)
-            XCTAssertEqual(fetchedToken?.identifier, savedToken.identifier)
+            XCTAssertEqual(fetchedToken?.id, savedToken.id)
         } catch {
             XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
         }
@@ -94,7 +94,7 @@ class KeychainTests: XCTestCase {
 
         // Attempt to restore the deleted token
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.identifier)
+            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
             XCTAssertNil(fetchedToken, "Token should have been removed from keychain")
         } catch {
             XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
@@ -120,8 +120,8 @@ class KeychainTests: XCTestCase {
 
         // Fetch both tokens from the keychain
         do {
-            let fetchedItem1 = try keychain.persistentToken(withIdentifier: savedItem1.identifier)
-            let fetchedItem2 = try keychain.persistentToken(withIdentifier: savedItem2.identifier)
+            let fetchedItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
+            let fetchedItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
             XCTAssertEqual(fetchedItem1, savedItem1, "Saved token not found in keychain")
             XCTAssertEqual(fetchedItem2, savedItem2, "Saved token not found in keychain")
         } catch {
@@ -136,8 +136,8 @@ class KeychainTests: XCTestCase {
         }
 
         do {
-            let checkItem1 = try keychain.persistentToken(withIdentifier: savedItem1.identifier)
-            let checkItem2 = try keychain.persistentToken(withIdentifier: savedItem2.identifier)
+            let checkItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
+            let checkItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
             XCTAssertNil(checkItem1, "Token should not be in keychain: \(token1)")
             XCTAssertNotNil(checkItem2, "Token should be in keychain: \(token2)")
         } catch {
@@ -152,8 +152,8 @@ class KeychainTests: XCTestCase {
         }
 
         do {
-            let recheckItem1 = try keychain.persistentToken(withIdentifier: savedItem1.identifier)
-            let recheckItem2 = try keychain.persistentToken(withIdentifier: savedItem2.identifier)
+            let recheckItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
+            let recheckItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
             XCTAssertNil(recheckItem1, "Token should not be in keychain: \(token1)")
             XCTAssertNil(recheckItem2, "Token should not be in keychain: \(token2)")
         } catch {

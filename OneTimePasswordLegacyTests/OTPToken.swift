@@ -73,14 +73,14 @@ public final class OTPToken: NSObject {
 
     @objc
     public func validate() -> Bool {
-        return (tokenForOTPToken(self) != nil)
+        tokenForOTPToken(self) != nil
     }
 }
 
 public extension OTPToken {
     @objc(tokenWithURL:)
     static func token(from url: URL) -> Self? {
-        return token(from: url, secret: nil)
+        token(from: url, secret: nil)
     }
 
     @objc(tokenWithURL:secret:)
