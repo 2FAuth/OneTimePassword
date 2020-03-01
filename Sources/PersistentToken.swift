@@ -32,12 +32,16 @@ public struct PersistentToken: Equatable, Hashable, Identifiable {
     /// A `Token` stored in the keychain.
     public let token: Token
     /// The keychain's persistent identifier for the saved token.
-    public let id: Data
+    public let id: String
+    
+    /// Used to store the encoded `CKRecord.ID` so that local records can be matched with records on the server.
+    public var ckData: Data?
 
     /// Initializes a new `PersistentToken` with the given properties.
-    internal init(token: Token, identifier: Data) {
+    internal init(token: Token, identifier: String, ckData: Data?) {
         self.token = token
         self.id = identifier
+        self.ckData = ckData
     }
 
     /// Hashes the persistent token's id into the given hasher, providing `Hashable` conformance.

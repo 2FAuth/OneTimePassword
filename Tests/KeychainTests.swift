@@ -46,7 +46,7 @@ class KeychainTests: XCTestCase {
         let token = testToken
 
         // Save the token
-        let savedToken: PersistentToken
+        var savedToken: PersistentToken
         do {
             savedToken = try keychain.add(token)
         } catch {
@@ -56,10 +56,10 @@ class KeychainTests: XCTestCase {
 
         // Restore the token
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
+            let fetchedToken = try keychain.persistentToken(with: savedToken.id)
             XCTAssertEqual(fetchedToken, savedToken, "Token should have been saved to keychain")
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
 
         // Modify the token
@@ -69,6 +69,9 @@ class KeychainTests: XCTestCase {
             generator: token.generator.successor()
         )
         do {
+            // provide ckData and save
+            savedToken.ckData = "123".data(using: .utf8)
+            
             let updatedToken = try keychain.update(savedToken, with: modifiedToken)
             XCTAssertEqual(updatedToken.id, savedToken.id)
             XCTAssertEqual(updatedToken.token, modifiedToken)
@@ -78,11 +81,11 @@ class KeychainTests: XCTestCase {
 
         // Fetch the token again
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
+            let fetchedToken = try keychain.persistentToken(with: savedToken.id)
             XCTAssertEqual(fetchedToken?.token, modifiedToken)
             XCTAssertEqual(fetchedToken?.id, savedToken.id)
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
 
         // Remove the token
@@ -94,10 +97,10 @@ class KeychainTests: XCTestCase {
 
         // Attempt to restore the deleted token
         do {
-            let fetchedToken = try keychain.persistentToken(withIdentifier: savedToken.id)
+            let fetchedToken = try keychain.persistentToken(with: savedToken.id)
             XCTAssertNil(fetchedToken, "Token should have been removed from keychain")
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
     }
 
@@ -120,12 +123,12 @@ class KeychainTests: XCTestCase {
 
         // Fetch both tokens from the keychain
         do {
-            let fetchedItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
-            let fetchedItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
+            let fetchedItem1 = try keychain.persistentToken(with: savedItem1.id)
+            let fetchedItem2 = try keychain.persistentToken(with: savedItem2.id)
             XCTAssertEqual(fetchedItem1, savedItem1, "Saved token not found in keychain")
             XCTAssertEqual(fetchedItem2, savedItem2, "Saved token not found in keychain")
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
 
         // Remove the first token from the keychain
@@ -136,12 +139,12 @@ class KeychainTests: XCTestCase {
         }
 
         do {
-            let checkItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
-            let checkItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
+            let checkItem1 = try keychain.persistentToken(with: savedItem1.id)
+            let checkItem2 = try keychain.persistentToken(with: savedItem2.id)
             XCTAssertNil(checkItem1, "Token should not be in keychain: \(token1)")
             XCTAssertNotNil(checkItem2, "Token should be in keychain: \(token2)")
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
 
         // Remove the second token from the keychain
@@ -152,29 +155,17 @@ class KeychainTests: XCTestCase {
         }
 
         do {
-            let recheckItem1 = try keychain.persistentToken(withIdentifier: savedItem1.id)
-            let recheckItem2 = try keychain.persistentToken(withIdentifier: savedItem2.id)
+            let recheckItem1 = try keychain.persistentToken(with: savedItem1.id)
+            let recheckItem2 = try keychain.persistentToken(with: savedItem2.id)
             XCTAssertNil(recheckItem1, "Token should not be in keychain: \(token1)")
             XCTAssertNil(recheckItem2, "Token should not be in keychain: \(token2)")
         } catch {
-            XCTFail("persistentTokenWithIdentifier(_:) failed with error: \(error)")
+            XCTFail("persistentToken(with:) failed with error: \(error)")
         }
 
         // Try to remove both tokens from the keychain again
-        do {
-            try keychain.delete(savedItem1)
-            // The deletion should throw and this line should never be reached.
-            XCTFail("Removing again should fail: \(token1)")
-        } catch {
-            // An error thrown is the expected outcome
-        }
-        do {
-            try keychain.delete(savedItem2)
-            // The deletion should throw and this line should never be reached.
-            XCTFail("Removing again should fail: \(token2)")
-        } catch {
-            // An error thrown is the expected outcome
-        }
+        XCTAssertNoThrow(try keychain.delete(savedItem1), "Removing again should not fail: \(token1)")
+        XCTAssertNoThrow(try keychain.delete(savedItem2), "Removing again should not fail: \(token2)")
     }
 
     func testAllPersistentTokens() {
@@ -228,13 +219,13 @@ class KeychainTests: XCTestCase {
             kSecValueData as String:    testToken.generator.secret as NSData,
         ]
 
-        let persistentRef = try addKeychainItem(withAttributes: keychainAttributes)
+        let identifier = try addKeychainItem(with: keychainAttributes)
 
-        XCTAssertThrowsError(try keychain.persistentToken(withIdentifier: persistentRef))
+        XCTAssertThrowsError(try keychain.persistentToken(with: identifier))
         // TODO: Restore deserialization error handling in allPersistentTokens()
 //        XCTAssertThrowsError(try keychain.allPersistentTokens())
 
-        XCTAssertNoThrow(try deleteKeychainItem(forPersistentRef: persistentRef),
+        XCTAssertNoThrow(try deleteKeychainItem(for: identifier),
                          "Failed to delete the test token from the keychain. This may cause future test runs to fail.")
     }
 
@@ -245,13 +236,13 @@ class KeychainTests: XCTestCase {
             kSecAttrGeneric as String:  data as NSData,
         ]
 
-        let persistentRef = try addKeychainItem(withAttributes: keychainAttributes)
+        let identifier = try addKeychainItem(with: keychainAttributes)
 
-        XCTAssertThrowsError(try keychain.persistentToken(withIdentifier: persistentRef))
+        XCTAssertThrowsError(try keychain.persistentToken(with: identifier))
         // TODO: Restore deserialization error handling in allPersistentTokens()
 //        XCTAssertThrowsError(try keychain.allPersistentTokens())
 
-        XCTAssertNoThrow(try deleteKeychainItem(forPersistentRef: persistentRef),
+        XCTAssertNoThrow(try deleteKeychainItem(for: identifier),
                          "Failed to delete the test token from the keychain. This may cause future test runs to fail.")
     }
 
@@ -263,13 +254,13 @@ class KeychainTests: XCTestCase {
             kSecValueData as String:    testToken.generator.secret as NSData,
         ]
 
-        let persistentRef = try addKeychainItem(withAttributes: keychainAttributes)
+        let identifier = try addKeychainItem(with: keychainAttributes)
 
-        XCTAssertThrowsError(try keychain.persistentToken(withIdentifier: persistentRef))
+        XCTAssertThrowsError(try keychain.persistentToken(with: identifier))
         // TODO: Restore deserialization error handling in allPersistentTokens()
 //        XCTAssertThrowsError(try keychain.allPersistentTokens())
 
-        XCTAssertNoThrow(try deleteKeychainItem(forPersistentRef: persistentRef),
+        XCTAssertNoThrow(try deleteKeychainItem(for: identifier),
                          "Failed to delete the test token from the keychain. This may cause future test runs to fail.")
     }
 
@@ -281,27 +272,29 @@ class KeychainTests: XCTestCase {
             kSecValueData as String:    testToken.generator.secret as NSData,
         ]
 
-        let persistentRef = try addKeychainItem(withAttributes: keychainAttributes)
+        let identifier = try addKeychainItem(with: keychainAttributes)
 
-        XCTAssertThrowsError(try keychain.persistentToken(withIdentifier: persistentRef))
+        XCTAssertThrowsError(try keychain.persistentToken(with: identifier))
         // TODO: Restore deserialization error handling in allPersistentTokens()
 //        XCTAssertThrowsError(try keychain.allPersistentTokens())
 
-        XCTAssertNoThrow(try deleteKeychainItem(forPersistentRef: persistentRef),
+        XCTAssertNoThrow(try deleteKeychainItem(for: identifier),
                          "Failed to delete the test token from the keychain. This may cause future test runs to fail.")
     }
 }
 
 // MARK: OTPKeychain helpers
 
-private func addKeychainItem(withAttributes attributes: [String: AnyObject]) throws -> Data {
+private func addKeychainItem(with attributes: [String: AnyObject]) throws -> String {
     var mutableAttributes = attributes
     mutableAttributes[kSecClass as String] = kSecClassGenericPassword
-    mutableAttributes[kSecReturnPersistentRef as String] = kCFBooleanTrue
+    mutableAttributes[kSecAttrService as String] = "app.2fauth.token" as NSString
+
     // Set a random string for the account name.
     // We never query by or display this value, but the keychain requires it to be unique.
+    let identifier = UUID().uuidString
     if mutableAttributes[kSecAttrAccount as String] == nil {
-        mutableAttributes[kSecAttrAccount as String] = UUID().uuidString as NSString
+        mutableAttributes[kSecAttrAccount as String] = identifier as NSString
     }
 
     var result: AnyObject?
@@ -310,23 +303,21 @@ private func addKeychainItem(withAttributes attributes: [String: AnyObject]) thr
     }
 
     guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
+        throw KeychainWrapper.Error.systemError(resultCode)
     }
-    guard let persistentRef = result as? Data else {
-        throw OTPKeychain.Error.incorrectReturnType
-    }
-    return persistentRef
+    return identifier
 }
 
-public func deleteKeychainItem(forPersistentRef persistentRef: Data) throws {
+public func deleteKeychainItem(for identifier: String) throws {
     let queryDict: [String: AnyObject] = [
         kSecClass as String:               kSecClassGenericPassword,
-        kSecValuePersistentRef as String:  persistentRef as NSData,
+        kSecAttrAccount as String:         identifier as NSString,
+        kSecAttrService as String:         "app.2fauth.token" as NSString,
     ]
 
     let resultCode = SecItemDelete(queryDict as CFDictionary)
 
     guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
+        throw KeychainWrapper.Error.systemError(resultCode)
     }
 }

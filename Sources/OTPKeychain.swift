@@ -28,7 +28,11 @@ import Foundation
 /// The `OTPKeychain`'s shared instance is a singleton which represents the iOS system keychain used
 /// to securely store tokens.
 public final class OTPKeychain {
-    public init() {}
+    private let keychain: KeychainWrapper
+    
+    public init() {
+        keychain = KeychainWrapper(service: "app.2fauth.token")
+    }
 
     // MARK: Read
 
@@ -38,15 +42,15 @@ public final class OTPKeychain {
     ///
     /// - throws: A `OTPKeychain.Error` if an error occurred.
     /// - returns: The persistent token, or `nil` if no token matched the given id.
-    public func persistentToken(withIdentifier identifier: Data) throws -> PersistentToken? {
-        try keychainItem(forPersistentRef: identifier).map(PersistentToken.init(keychainDictionary:))
+    public func persistentToken(with identifier: String) throws -> PersistentToken? {
+        try keychain.item(with: identifier).map(PersistentToken.init(keychainDictionary:))
     }
 
     /// Returns the set of all persistent tokens found in the keychain.
     ///
     /// - throws: A `OTPKeychain.Error` if an error occurred.
     public func allPersistentTokens() throws -> Set<PersistentToken> {
-        let allItems = try allKeychainItems()
+        let allItems = try keychain.allItems()
         // This code intentionally ignores items which fail deserialization, instead opting to return as many readable
         // tokens as possible.
         // TODO: Restore deserialization error handling, in a way that provides info on the failure reason and allows
@@ -63,9 +67,10 @@ public final class OTPKeychain {
     /// - throws: A `OTPKeychain.Error` if the token was not added successfully.
     /// - returns: The new persistent token.
     public func add(_ token: Token) throws -> PersistentToken {
-        let attributes = try token.keychainAttributes()
-        let persistentRef = try addKeychainItem(withAttributes: attributes)
-        return PersistentToken(token: token, identifier: persistentRef)
+        let identifier = UUID().uuidString
+        let attributes = try serialize(token: token)
+        try keychain.addItem(with: identifier, attributes: attributes)
+        return PersistentToken(token: token, identifier: identifier, ckData: nil)
     }
 
     /// Updates the given persistent token with a new token value.
@@ -76,10 +81,10 @@ public final class OTPKeychain {
     /// - throws: A `OTPKeychain.Error` if the update did not succeed.
     /// - returns: The updated persistent token.
     public func update(_ persistentToken: PersistentToken, with token: Token) throws -> PersistentToken {
-        let attributes = try token.keychainAttributes()
-        try updateKeychainItem(forPersistentRef: persistentToken.id,
-                               withAttributes: attributes)
-        return PersistentToken(token: token, identifier: persistentToken.id)
+        let ckData = persistentToken.ckData
+        let attributes = try serialize(token: token, ckData: ckData)
+        try keychain.updateItem(with: persistentToken.id, attributes: attributes)
+        return PersistentToken(token: token, identifier: persistentToken.id, ckData: ckData)
     }
 
     /// Deletes the given persistent token from the keychain.
@@ -91,17 +96,30 @@ public final class OTPKeychain {
     ///
     /// - throws: A `OTPKeychain.Error` if the deletion did not succeed.
     public func delete(_ persistentToken: PersistentToken) throws {
-        try deleteKeychainItem(forPersistentRef: persistentToken.id)
+        try keychain.deleteItem(with: persistentToken.id)
+    }
+    
+    // MARK: Private
+    
+    private func serialize(token: Token, ckData: Data? = nil) throws -> [String: AnyObject] {
+        do {
+            let url = try token.toURL()
+            let tokenData = TokenData(url: url, ckData: ckData)
+            let encodedData = try JSONEncoder().encode(tokenData)
+            return [
+                kSecAttrGeneric as String:  encodedData as NSData,
+                kSecValueData as String:    token.generator.secret as NSData,
+            ]
+        }
+        catch {
+            throw Error.tokenSerializationFailure
+        }
     }
 
     // MARK: Errors
 
     /// An error type enum representing the various errors a `OTPKeychain` operation can throw.
     public enum Error: Swift.Error {
-        /// The keychain operation returned a system error code.
-        case systemError(OSStatus)
-        /// The keychain operation returned an unexpected type of data.
-        case incorrectReturnType
         /// The given token could not be serialized to keychain data.
         case tokenSerializationFailure
     }
@@ -109,151 +127,39 @@ public final class OTPKeychain {
 
 // MARK: - Private
 
-private let kOTPService = "me.mattrubin.onetimepassword.token"
-private let urlStringEncoding = String.Encoding.utf8
-
-private extension Token {
-    func keychainAttributes() throws -> [String: AnyObject] {
-        let url = try self.toURL()
-        guard let data = url.absoluteString.data(using: urlStringEncoding) else {
-            throw OTPKeychain.Error.tokenSerializationFailure
-        }
-        return [
-            kSecAttrGeneric as String:  data as NSData,
-            kSecValueData as String:    generator.secret as NSData,
-            kSecAttrService as String:  kOTPService as NSString,
-        ]
-    }
+private struct TokenData: Codable {
+    let url: URL
+    let ckData: Data?
 }
 
 private extension PersistentToken {
     enum DeserializationError: Error {
         case missingData
         case missingSecret
-        case missingPersistentRef
+        case missingIdentifier
         case unreadableData
     }
 
     init(keychainDictionary: NSDictionary) throws {
-        guard let urlData = keychainDictionary[kSecAttrGeneric as String] as? Data else {
+        guard let tokenDataDecoded = keychainDictionary[kSecAttrGeneric as String] as? Data else {
             throw DeserializationError.missingData
         }
         guard let secret = keychainDictionary[kSecValueData as String] as? Data else {
             throw DeserializationError.missingSecret
         }
-        guard let keychainItemRef = keychainDictionary[kSecValuePersistentRef as String] as? Data else {
-            throw DeserializationError.missingPersistentRef
+        guard let identifier = keychainDictionary[kSecAttrAccount as String] as? String else {
+            throw DeserializationError.missingIdentifier
         }
-        guard let urlString = String(data: urlData, encoding: urlStringEncoding),
-            let url = URL(string: urlString) else {
-                throw DeserializationError.unreadableData
+        let url: URL
+        let ckData: Data?
+        do {
+            let tokenData = try JSONDecoder().decode(TokenData.self, from: tokenDataDecoded)
+            url = tokenData.url
+            ckData = tokenData.ckData
+        } catch {
+            throw DeserializationError.unreadableData
         }
         let token = try Token(_url: url, secret: secret)
-        self.init(token: token, identifier: keychainItemRef)
+        self.init(token: token, identifier: identifier, ckData: ckData)
     }
-}
-
-private func addKeychainItem(withAttributes attributes: [String: AnyObject]) throws -> Data {
-    var mutableAttributes = attributes
-    mutableAttributes[kSecClass as String] = kSecClassGenericPassword
-    mutableAttributes[kSecReturnPersistentRef as String] = kCFBooleanTrue
-    // Set a random string for the account name.
-    // We never query by or display this value, but the keychain requires it to be unique.
-    if mutableAttributes[kSecAttrAccount as String] == nil {
-        mutableAttributes[kSecAttrAccount as String] = UUID().uuidString as NSString
-    }
-
-    var result: AnyObject?
-    let resultCode: OSStatus = withUnsafeMutablePointer(to: &result) {
-        SecItemAdd(mutableAttributes as CFDictionary, $0)
-    }
-
-    guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
-    }
-    guard let persistentRef = result as? Data else {
-        throw OTPKeychain.Error.incorrectReturnType
-    }
-    return persistentRef
-}
-
-private func updateKeychainItem(forPersistentRef persistentRef: Data,
-                                withAttributes attributesToUpdate: [String: AnyObject]) throws {
-    let queryDict: [String: AnyObject] = [
-        kSecClass as String:               kSecClassGenericPassword,
-        kSecValuePersistentRef as String:  persistentRef as NSData,
-    ]
-
-    let resultCode = SecItemUpdate(queryDict as CFDictionary, attributesToUpdate as CFDictionary)
-
-    guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
-    }
-}
-
-private func deleteKeychainItem(forPersistentRef persistentRef: Data) throws {
-    let queryDict: [String: AnyObject] = [
-        kSecClass as String:               kSecClassGenericPassword,
-        kSecValuePersistentRef as String:  persistentRef as NSData,
-    ]
-
-    let resultCode = SecItemDelete(queryDict as CFDictionary)
-
-    guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
-    }
-}
-
-private func keychainItem(forPersistentRef persistentRef: Data) throws -> NSDictionary? {
-    let queryDict: [String: AnyObject] = [
-        kSecClass as String:                kSecClassGenericPassword,
-        kSecValuePersistentRef as String:   persistentRef as NSData,
-        kSecReturnPersistentRef as String:  kCFBooleanTrue,
-        kSecReturnAttributes as String:     kCFBooleanTrue,
-        kSecReturnData as String:           kCFBooleanTrue,
-    ]
-
-    var result: AnyObject?
-    let resultCode = withUnsafeMutablePointer(to: &result) {
-        SecItemCopyMatching(queryDict as CFDictionary, $0)
-    }
-
-    if resultCode == errSecItemNotFound {
-        // Not finding any keychain items is not an error in this case. Return nil.
-        return nil
-    }
-    guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
-    }
-    guard let keychainItem = result as? NSDictionary else {
-        throw OTPKeychain.Error.incorrectReturnType
-    }
-    return keychainItem
-}
-
-private func allKeychainItems() throws -> [NSDictionary] {
-    let queryDict: [String: AnyObject] = [
-        kSecClass as String:                kSecClassGenericPassword,
-        kSecMatchLimit as String:           kSecMatchLimitAll,
-        kSecReturnPersistentRef as String:  kCFBooleanTrue,
-        kSecReturnAttributes as String:     kCFBooleanTrue,
-        kSecReturnData as String:           kCFBooleanTrue,
-    ]
-
-    var result: AnyObject?
-    let resultCode = withUnsafeMutablePointer(to: &result) {
-        SecItemCopyMatching(queryDict as CFDictionary, $0)
-    }
-
-    if resultCode == errSecItemNotFound {
-        // Not finding any keychain items is not an error in this case. Return an empty array.
-        return []
-    }
-    guard resultCode == errSecSuccess else {
-        throw OTPKeychain.Error.systemError(resultCode)
-    }
-    guard let keychainItems = result as? [NSDictionary] else {
-        throw OTPKeychain.Error.incorrectReturnType
-    }
-    return keychainItems
 }
