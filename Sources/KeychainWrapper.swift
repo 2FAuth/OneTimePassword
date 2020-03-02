@@ -59,7 +59,7 @@ public struct KeychainWrapper {
         self.service = service
     }
     
-    func addOrUpdateItem(with identifier: String, attributes: [String: AnyObject]) throws {
+    public func addOrUpdateItem(with identifier: String, attributes: [String: AnyObject]) throws {
         do {
             try addItem(with: identifier, attributes: attributes)
         } catch Error.systemError(let status) where status == errSecDuplicateItem {
@@ -69,7 +69,7 @@ public struct KeychainWrapper {
         }
     }
     
-    func addItem(with identifier: String, attributes: [String: AnyObject]) throws {
+    public func addItem(with identifier: String, attributes: [String: AnyObject]) throws {
         var mutableAttributes = attributes
         mutableAttributes[kSecClass as String] = kSecClassGenericPassword
         mutableAttributes[kSecAttrAccount as String] = identifier as NSString
@@ -82,7 +82,7 @@ public struct KeychainWrapper {
         }
     }
     
-    func updateItem(with identifier: String, attributes: [String: AnyObject]) throws {
+    public func updateItem(with identifier: String, attributes: [String: AnyObject]) throws {
         let query: [String: AnyObject] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: identifier as NSString,
@@ -96,7 +96,7 @@ public struct KeychainWrapper {
         }
     }
     
-    func deleteItem(with identifier: String) throws {
+    public func deleteItem(with identifier: String) throws {
         let query: [String: AnyObject] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: identifier as NSString,
@@ -110,7 +110,7 @@ public struct KeychainWrapper {
         }
     }
     
-    func item(with identifier: String) throws -> NSDictionary? {
+    public func item(with identifier: String) throws -> NSDictionary? {
         let query: [String: AnyObject] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: identifier as NSString,
@@ -138,7 +138,7 @@ public struct KeychainWrapper {
         return keychainItem
     }
     
-    func allItems() throws -> [NSDictionary] {
+    public func allItems() throws -> [NSDictionary] {
         let query: [String: AnyObject] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecMatchLimit as String: kSecMatchLimitAll,
