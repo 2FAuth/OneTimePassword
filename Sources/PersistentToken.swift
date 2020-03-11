@@ -43,6 +43,11 @@ public struct PersistentToken: Equatable, Hashable, Identifiable {
         self.id = id
         self.ckData = ckData
     }
+    
+    /// Equatable implementation
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id
+    }
 
     /// Hashes the persistent token's id into the given hasher, providing `Hashable` conformance.
     public func hash(into hasher: inout Hasher) {
