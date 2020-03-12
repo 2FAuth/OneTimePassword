@@ -62,29 +62,22 @@ public final class OTPKeychain {
 
     /// Adds the given token to the keychain and returns the persistent token which contains it.
     ///
-    /// - parameter token: The token to save to the keychain.
+    /// - parameter persistentToken: The persistent token to save to the keychain.
     ///
     /// - throws: A `OTPKeychain.Error` if the token was not added successfully.
-    /// - returns: The new persistent token.
-    public func add(_ token: Token) throws -> PersistentToken {
-        let id = UUID().uuidString
-        let attributes = try serialize(token: token)
-        try keychain.addItem(with: id, attributes: attributes)
-        return PersistentToken(token: token, id: id, ckData: nil)
+    public func add(_ persistentToken: PersistentToken) throws {
+        let attributes = try serialize(token: persistentToken.token, ckData: persistentToken.ckData)
+        try keychain.addItem(with: persistentToken.id, attributes: attributes)
     }
 
     /// Updates the given persistent token with a new token value.
     ///
     /// - parameter persistentToken: The persistent token to update.
-    /// - parameter token: The new token value.
     ///
     /// - throws: A `OTPKeychain.Error` if the update did not succeed.
-    /// - returns: The updated persistent token.
-    public func update(_ persistentToken: PersistentToken, with token: Token) throws -> PersistentToken {
-        let ckData = persistentToken.ckData
-        let attributes = try serialize(token: token, ckData: ckData)
+    public func update(_ persistentToken: PersistentToken) throws {
+        let attributes = try serialize(token: persistentToken.token, ckData: persistentToken.ckData)
         try keychain.updateItem(with: persistentToken.id, attributes: attributes)
-        return PersistentToken(token: token, id: persistentToken.id, ckData: ckData)
     }
 
     /// Deletes the given persistent token from the keychain.
