@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "Base32",
-        "repositoryURL": "https://github.com/podkovyrin/Base32",
+        "repositoryURL": "https://github.com/2FAuth/Base32",
         "state": {
           "branch": "2fauth",
           "revision": "2901af815f77d869af0631a319e2ed7efde79cee",
