@@ -10,6 +10,7 @@ let package = Package(
     products: [
         .library(
             name: "OneTimePassword",
+            type: .dynamic,
             targets: ["OneTimePassword"]
         )
     ],
