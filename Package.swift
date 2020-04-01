@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/2FAuth/Base32",
-            .revision("2901af815f77d869af0631a319e2ed7efde79cee")
+            .revision("8fff87bc508b2090184b6cfe661b1a617662734a")
         )
     ],
     targets: [
