@@ -24,7 +24,9 @@
 //
 
 import Foundation
+#if canImport(Base32)
 import Base32
+#endif /* canImport(Base32) */
 
 public extension Token {
     // MARK: Serialization
