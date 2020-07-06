@@ -110,6 +110,19 @@ public struct KeychainWrapper {
         }
     }
     
+    public func deleteAll() throws {
+        let query: [String: AnyObject] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service as NSString,
+        ]
+        
+        let resultCode = SecItemDelete(query as CFDictionary)
+        
+        guard resultCode == errSecSuccess || resultCode == errSecItemNotFound else {
+            throw Error.systemError(resultCode)
+        }
+    }
+    
     public func item(with identifier: String) throws -> NSDictionary? {
         let query: [String: AnyObject] = [
             kSecClass as String: kSecClassGenericPassword,

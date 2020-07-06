@@ -92,6 +92,13 @@ public final class OTPKeychain {
         try keychain.deleteItem(with: persistentToken.id)
     }
     
+    /// Deletes all persistent tokens from the keychain.
+    ///
+    /// - throws: A `OTPKeychain.Error` if the deletion did not succeed.
+    public func deleteAll() throws {
+        try keychain.deleteAll()
+    }
+    
     // MARK: Private
     
     private func serialize(token: Token, ckData: Data? = nil) throws -> [String: AnyObject] {

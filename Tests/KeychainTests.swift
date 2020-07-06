@@ -206,9 +206,7 @@ class KeychainTests: XCTestCase {
         }
 
         do {
-            try keychain.delete(persistentToken1)
-            try keychain.delete(persistentToken2)
-            try keychain.delete(persistentToken3)
+            try keychain.deleteAll()
         } catch {
             XCTFail("deletePersistentToken(_:) failed with error: \(error)")
         }
