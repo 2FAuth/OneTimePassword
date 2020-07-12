@@ -74,6 +74,7 @@ public struct KeychainWrapper {
         mutableAttributes[kSecClass as String] = kSecClassGenericPassword
         mutableAttributes[kSecAttrAccount as String] = identifier as NSString
         mutableAttributes[kSecAttrService as String] = service as NSString
+        mutableAttributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock as NSString
         
         let resultCode = SecItemAdd(mutableAttributes as CFDictionary, nil)
         
@@ -87,6 +88,7 @@ public struct KeychainWrapper {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: identifier as NSString,
             kSecAttrService as String: service as NSString,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock as NSString
         ]
         
         let resultCode = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
